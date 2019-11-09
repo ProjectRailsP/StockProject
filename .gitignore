@@ -1,0 +1,11 @@
+frontend/dist
+myapp/static
+frontend/node_modules
+/.idea/
+.idea
+**.iml
+.idea/**.xml
+db.sqlite3
+venv
+package-lock.json
+myapp/__pycache__

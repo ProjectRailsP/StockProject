@@ -1,9 +1,31 @@
+import pickle
+import sqlite3
+
 from django.shortcuts import render, redirect
+from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import csrf_protect, requires_csrf_token, csrf_exempt
+from rest_framework import viewsets, status
+import json
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
 from myapp import stock_api
-from myapp.models import Stock
-from django.http import JsonResponse
-from django.contrib.auth.models import User
+from myapp.models import Stock, FavoriteStocks, Notifications, NotificationType , User
+from django.http import JsonResponse, HttpResponseBadRequest
+# from django.contrib.auth.models import User
 from django.contrib.auth import logout
+from django.utils import timezone
+#from myapp.serializers import FavoriteStocksSerializerpi
+from myapp.notifications.notifications_api import NotificationsApi
+from myapp.scheduler.scheduler import KillableThread
+
+from myapp.serializers import FavoriteStocksSerializer
+
+
+class FavoriteStocksViewSet(viewsets.ModelViewSet):
+    queryset = FavoriteStocks.objects.all()
+    serializer_class = FavoriteStocksSerializer
 
 
 # View for the home page - a list of 20 of the most active stocks
@@ -17,6 +39,7 @@ def index(request):
 # symbol is the requested stock's symbol ('AAPL' for Apple)
 def single_stock(request, symbol):
 	data = stock_api.get_stock_info(symbol)
+	print(data[ 'change'])
 	return render(request, 'single_stock.html', {'page_title': 'Stock Page - %s' % symbol, 'data': data})
 
 
@@ -38,6 +61,23 @@ def register(request):
 		return render(request, 'register.html', {'page_title': 'Register'})
 
 
+@csrf_exempt
+def registerData(request):
+    msg = "user name allready in use"
+    data = json.loads(request.body)
+    users = User.objects.values('username', 'password')
+    for i in users:
+         if i['username'] == data['username']:
+             return JsonResponse(msg, safe=False)
+
+	#newuser = User.objects.create_user(username=data['username'],password=data['password'],email="test")
+    newuser =User()
+    newuser.username= data['username']
+    newuser.password= data['password']
+    newuser.save()
+
+    return JsonResponse("you are registired successfully", safe=False)
+
 def logout_view(request):
 	logout(request)
 	return redirect('index')
@@ -49,3 +89,111 @@ def logout_view(request):
 def single_stock_historic(request, symbol):
 	data = stock_api.get_stock_historic_prices(symbol, time_range='1m')
 	return JsonResponse({'data': data})
+
+
+def get_favorite_stocks(request ,username):
+	stocks = FavoriteStocks.objects.filter(username=username).values('username','stock')
+	print((stocks)[0]['stock'])
+    # for i in range(len(list(stocks))):
+    #     string += list(stocks)[i]['stock']
+	return JsonResponse( list(stocks),safe=False)
+
+def getFavoriteStocksInfo(request,username):
+	data = stock_api.get_stocks_for_favorite(get_string_stocks(username))
+	return JsonResponse( data,safe=False)
+
+
+# @cache_page(60 * 15)
+# @csrf_protect
+#@requires_csrf_token
+@csrf_exempt
+def logindata(request):
+ msg="user name or password is uncorrect"
+ data=json.loads(request.body)
+ users=User.objects.values('username','password')
+ for i in users:
+  if i['username'] == data['username']:
+	  if i['password'] == data['password']:
+		  print("d")
+		  msg="logged in successfully"
+
+ return JsonResponse(msg,safe=False)
+ #return  HttpResponseBadRequest
+def get_string_stocks(username):
+    stocks_str =""
+    stocks = FavoriteStocks.objects.filter(username=username).values('username', 'stock')
+    for i in range(len(list(stocks))):
+        stocks_str += list(stocks)[i]['stock']
+        if i != len(list(stocks)) - 1:
+            stocks_str += ","
+    return stocks_str
+
+def getTop20Stocks(request):
+	data = stock_api.get_top_stocks_for_grid()
+	return JsonResponse(data,safe=False)
+def multible_stock(request, username):
+
+	data = stock_api.get_multyble_stocks(get_string_stocks(username))
+	return JsonResponse({'data':data})
+
+def getNotifications(request,username):
+	stocks = FavoriteStocks.objects.filter(username=username).values('username', 'stock')
+
+
+    #Notifications.objects.create(stock="goog", type="down")
+	# notificatins_list=[]
+	# data_notification = {}
+	data = []
+
+
+
+
+    # json_data = json.dumps(data_notification)
+
+
+
+	for stock in list(stocks):
+
+		stock_info = stock_api.get_stock_info(stock['stock'])
+		if stock_info[ 'change'] > 0:
+			n = Notifications(str(stock['stock']), "up")
+
+			# new1=Notifications(stock="asd",type="up")
+			# new1.save(force_insert=False,force_update=False,using=None,update_fields=None)
+
+			print(str(stock['stock']) +"up")
+
+			conn = sqlite3.connect('db.sqlite3')
+			cur = conn.cursor()
+			cur.execute('INSERT INTO myapp_notifications (stock, type) values (?, ?)', (n.stock, n.type))
+			conn.commit()
+            #n.save(force_insert=False,force_update=False,using=None,update_fields=None)
+			data.append({"stock":n.stock,"type": n.type})
+
+		if stock_info['change'] < 0:
+
+		    print(str(stock['stock']) +"down")
+		    n=Notifications(str(stock['stock']),"down")
+		    data.append({"stock":n.stock,"type": n.type})
+            # pick = pickle.dump(n)
+
+
+
+	print(data)
+	json_data=json.dumps(data)
+	print(json_data)
+	return JsonResponse( data,safe=False)
+	#[{"username": "moham", "stock": "goog"}, {"username": "moham", "stock": "AMZN"}]
+
+def getNotificationsApi(request,username):
+	notifications = NotificationType.objects.filter(username=username).values('username', 'stock' ,'notificationType')
+	return JsonResponse(list(notifications), safe=False)
+
+@api_view(["POST"])
+def CalcTest(x1):
+    try:
+        x=json.loads(x1.body)
+        y=str(x*100)
+        return JsonResponse("Result:"+y,safe=False)
+    except ValueError as e:
+        return Response(e.args[0],status.HTTP_400_BAD_REQUEST)
