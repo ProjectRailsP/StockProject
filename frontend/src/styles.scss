@@ -1,0 +1,22 @@
+@import "~ag-grid-community/dist/styles/ag-grid.css";
+@import "~ag-grid-community/dist/styles/ag-theme-balham.css";
+@import "theme.scss";
+.ag-theme-balham .ag-header {
+    background-color: #ffffffe0;
+    color: rgb(59, 61, 63);
+    font-weight: bolder;
+    font-size: 19px;
+    font-family: "Helvetica Neue", sans-serif;
+    border-bottom: 0px solid #BDC3C7;
+    text-align: center;
+}
+
+.ag-center-cols-viewport {
+    height: calc(100% + 0px);
+    background-color: #dbdbca79;
+}
+
+body {
+    background-color: #dfdfdfe0;
+    height: 100%;
+}
