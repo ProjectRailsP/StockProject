@@ -1,0 +1,72 @@
+    @import '~@angular/material/theming';
+    @include mat-core();
+    // Typography
+    $custom-typography: mat-typography-config( $font-family: Raleway, $headline: mat-typography-level(24px, 48px, 400), $body-1: mat-typography-level(16px, 24px, 400));
+    @include angular-material-typography($custom-typography);
+    @mixin global-theme($theme) {
+        $background: map-get($theme, background);
+        $foreground: map-get($theme, foreground);
+        background-color: mat-color($background, background);
+        color: mat-color($foreground, text);
+    }
+    
+    // Default colors
+    $dafault-primary: mat-palette($mat-brown, 50, 100, 500);
+    $dafault-accent: mat-palette($mat-pink, 50, 100, 800);
+    $dafault-theme: mat-light-theme($dafault-primary, $dafault-accent);
+    @include angular-material-theme($dafault-theme);
+    // Dark theme
+    $dark-primary: mat-palette($mat-blue-grey, A700);
+    $dark-accent: mat-palette($mat-green, 100, 900);
+    $dark-warn: mat-palette($mat-orange);
+    $dark-theme: mat-dark-theme($dark-primary, $dark-accent, $dark-warn);
+    .dark-theme {
+        @include angular-material-theme($dark-theme);
+        @include global-theme($dark-theme);
+        .ag-theme-balham .ag-header {
+            background-color: #6d706ee8;
+            color: rgb(7, 11, 15);
+            font-weight: bolder;
+            font-size: 19px;
+            font-family: "Helvetica Neue", sans-serif;
+            border-bottom: 0px solid #BDC3C7;
+        }
+        .ag-center-cols-viewport {
+            height: calc(100% + 0px);
+            background-color: #dbdbca79;
+        }
+    }
+    /**
+@import "~@angular/material/theming";
+@import "node_modules/bootstrap/scss/bootstrap";
+@include mat-core();
+//Typography
+$custom-typography: mat-typography-config( $font-family: Raleway, $headline: mat-typography-level(24px, 48px, 400), $body-1: mat-typography-level(16px, 24px, 400));
+@include angular-material-typography($custom-typography);
+// Light theme
+$light-primary: mat-palette($mat-pink, 200, 500, 300);
+$light-accent: mat-palette($mat-pink, 200);
+$light-warn: mat-palette($mat-yellow, 200);
+$light-theme: mat-light-theme($light-primary, $light-accent, $light-warn);
+.light-theme {
+    @include angular-material-theme($light-theme)
+}
+
+// Dark theme
+$dark-primary: mat-palette($mat-blue-grey);
+$dark-accent: mat-palette($mat-amber, A200, A100, A400);
+$dark-warn: mat-palette($mat-red);
+$dark-theme: mat-dark-theme($dark-primary, $dark-accent, $dark-warn);
+.alternative {
+    @include angular-material-theme($dark-theme);
+    $theme-colors: ( "primary": #d96200, "danger": red, "dark": darkgray);
+    $body-bg: black;
+}
+
+
+
+.alternative {
+    $theme-colors: ( "primary": #d96200, "danger": red, "dark": darkgray);
+    $body-bg: black;
+}
+**/
