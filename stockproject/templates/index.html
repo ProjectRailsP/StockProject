@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!--
+    <div class="row">
+        <div class="col-11 text-left">Top Stocks</div>
+        <div class="col-1 text-right">X</div>
+    </div>
+    -->
+    <table class="table table-hover data-table">
+        <tr>
+            <th>#</th>
+            <th>Symbol</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Change</th>
+        </tr>
+        {% for stock in data %}
+            <tr class="clickable-row" data-href="/stock/{{ stock.symbol }}">
+
+                <td>{{ loop.index}}</td>
+                <td>{{ stock.symbol }}</td>
+                <td>{{ stock.name }}</td>
+                <td>{{ '%0.2f' | format(stock.price)}}</td>
+                <td class="
+                {% if stock.change_percent >= 0 %}
+                    text-success
+                {% else %}
+                    text-danger
+                {% endif %}
+                ">{{ '%0.2f' | format(stock.change_percent) }}%</td>
+
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
